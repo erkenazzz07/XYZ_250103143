@@ -1,0 +1,147 @@
+==================================================
+ DEMO with storage: disk
+==================================================
+
+>> 1+2. Alice creates a file. The content is saved by the chosen storage.
+    [PROXY] alice wants CREATE new file (role OWNER) -> ALLOWED
+   created f1 'report' TXT 21 bytes
+
+>> 3. Alice (owner) shares the file with Bob.
+    [PROXY] alice wants SHARE f1 (role OWNER) -> ALLOWED
+   alice shares f1 with bob -> OK
+
+>> 4-7. Bob reads it: request -> Proxy checks permission -> FileManager -> storage.
+    [PROXY] bob wants READ f1 (role VIEWER) -> ALLOWED
+   bob reads f1 -> content: "Quarterly numbers: 42"
+
+>> 8. Not allowed things are rejected by the proxy.
+    [PROXY] bob wants RENAME f1 (role VIEWER) -> DENIED
+   bob renames f1 -> REJECTED: bob (VIEWER) is not allowed to RENAME file f1
+    [PROXY] bob wants DELETE f1 (role VIEWER) -> DENIED
+   bob deletes f1 -> REJECTED: bob (VIEWER) is not allowed to DELETE file f1
+    [PROXY] bob wants SHARE f1 (role VIEWER) -> DENIED
+   bob shares f1 with carol -> REJECTED: bob (VIEWER) is not allowed to SHARE file f1
+    [PROXY] carol wants READ f1 (role NONE) -> DENIED
+   carol reads f1 -> REJECTED: carol (NONE) is not allowed to READ file f1
+
+>> Who sees what?
+   alice sees 1 file(s):
+     f1 report (TXT, 21 bytes, owner alice, folder -)
+   bob sees 1 file(s):
+     f1 report (TXT, 21 bytes, owner alice, folder -)
+   carol sees 0 file(s):
+
+>> Folders: create, move the file in, delete a non-empty folder (refused).
+    [PROXY] alice wants CREATE new folder (role OWNER) -> ALLOWED
+    [PROXY] alice wants MOVE f1 (role OWNER) -> ALLOWED
+    [PROXY] alice wants MOVE d1 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ d1 (role OWNER) -> ALLOWED
+   folder d1 contains 1 file(s)
+    [PROXY] alice wants DELETE d1 (role OWNER) -> ALLOWED
+   delete folder -> REJECTED: Folder 'reports' is not empty. Move or delete its files first.
+    [PROXY] alice wants MOVE f1 (role OWNER) -> ALLOWED
+    [PROXY] alice wants DELETE d1 (role OWNER) -> ALLOWED
+   after moving the file out, the empty folder was deleted
+
+>> Rename and restart (data must still be there).
+    [PROXY] alice wants RENAME f1 (role OWNER) -> ALLOWED
+   alice renames f1 -> OK
+   alice sees 1 file(s):
+     f1 q3-report (TXT, 21 bytes, owner alice, folder -)
+   bob reads f1 -> content: "Quarterly numbers: 42"
+
+>> UNIQUE FEATURE - version history
+    [PROXY] alice wants CREATE new file (role OWNER) -> ALLOWED
+    [PROXY] alice wants SHARE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants WRITE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants WRITE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+   plan has 3 versions:
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+     v1: "version one"
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+     v2: "version two (with budget)"
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+     v3: "version three (final)"
+    [PROXY] bob wants READ f2 (role VIEWER) -> ALLOWED
+   bob (viewer) reads old version 1: "version one"
+    [PROXY] bob wants WRITE f2 (role VIEWER) -> DENIED
+   bob tries to edit -> REJECTED: bob (VIEWER) is not allowed to WRITE file f2
+    [PROXY] alice wants WRITE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+   alice rolls back to v1 -> now 4 versions, current: "version one"
+
+==================================================
+ DEMO with storage: single
+==================================================
+
+>> 1+2. Alice creates a file. The content is saved by the chosen storage.
+    [PROXY] alice wants CREATE new file (role OWNER) -> ALLOWED
+   created f1 'report' TXT 21 bytes
+
+>> 3. Alice (owner) shares the file with Bob.
+    [PROXY] alice wants SHARE f1 (role OWNER) -> ALLOWED
+   alice shares f1 with bob -> OK
+
+>> 4-7. Bob reads it: request -> Proxy checks permission -> FileManager -> storage.
+    [PROXY] bob wants READ f1 (role VIEWER) -> ALLOWED
+   bob reads f1 -> content: "Quarterly numbers: 42"
+
+>> 8. Not allowed things are rejected by the proxy.
+    [PROXY] bob wants RENAME f1 (role VIEWER) -> DENIED
+   bob renames f1 -> REJECTED: bob (VIEWER) is not allowed to RENAME file f1
+    [PROXY] bob wants DELETE f1 (role VIEWER) -> DENIED
+   bob deletes f1 -> REJECTED: bob (VIEWER) is not allowed to DELETE file f1
+    [PROXY] bob wants SHARE f1 (role VIEWER) -> DENIED
+   bob shares f1 with carol -> REJECTED: bob (VIEWER) is not allowed to SHARE file f1
+    [PROXY] carol wants READ f1 (role NONE) -> DENIED
+   carol reads f1 -> REJECTED: carol (NONE) is not allowed to READ file f1
+
+>> Who sees what?
+   alice sees 1 file(s):
+     f1 report (TXT, 21 bytes, owner alice, folder -)
+   bob sees 1 file(s):
+     f1 report (TXT, 21 bytes, owner alice, folder -)
+   carol sees 0 file(s):
+
+>> Folders: create, move the file in, delete a non-empty folder (refused).
+    [PROXY] alice wants CREATE new folder (role OWNER) -> ALLOWED
+    [PROXY] alice wants MOVE f1 (role OWNER) -> ALLOWED
+    [PROXY] alice wants MOVE d1 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ d1 (role OWNER) -> ALLOWED
+   folder d1 contains 1 file(s)
+    [PROXY] alice wants DELETE d1 (role OWNER) -> ALLOWED
+   delete folder -> REJECTED: Folder 'reports' is not empty. Move or delete its files first.
+    [PROXY] alice wants MOVE f1 (role OWNER) -> ALLOWED
+    [PROXY] alice wants DELETE d1 (role OWNER) -> ALLOWED
+   after moving the file out, the empty folder was deleted
+
+>> Rename and restart (data must still be there).
+    [PROXY] alice wants RENAME f1 (role OWNER) -> ALLOWED
+   alice renames f1 -> OK
+   alice sees 1 file(s):
+     f1 q3-report (TXT, 21 bytes, owner alice, folder -)
+   bob reads f1 -> content: "Quarterly numbers: 42"
+
+>> UNIQUE FEATURE - version history
+    [PROXY] alice wants CREATE new file (role OWNER) -> ALLOWED
+    [PROXY] alice wants SHARE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants WRITE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants WRITE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+   plan has 3 versions:
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+     v1: "version one"
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+     v2: "version two (with budget)"
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+     v3: "version three (final)"
+    [PROXY] bob wants READ f2 (role VIEWER) -> ALLOWED
+   bob (viewer) reads old version 1: "version one"
+    [PROXY] bob wants WRITE f2 (role VIEWER) -> DENIED
+   bob tries to edit -> REJECTED: bob (VIEWER) is not allowed to WRITE file f2
+    [PROXY] alice wants WRITE f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+    [PROXY] alice wants READ f2 (role OWNER) -> ALLOWED
+   alice rolls back to v1 -> now 4 versions, current: "version one"
